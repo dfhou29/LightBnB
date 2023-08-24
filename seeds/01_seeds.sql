@@ -3,7 +3,7 @@ ALTER SEQUENCE reservations_id_seq RESTART WITH 1;
 ALTER SEQUENCE properties_id_seq RESTART WITH 1;
 ALTER SEQUENCE property_reviews_id_seq RESTART WITH 1;
 
-
+s
 INSERT INTO users (name, email, password)
 VALUES ('Eva Stanley', 'sebastianguerra@ymail.com', '$2a$10$FB/BOAVhpuLvpOREQVmvmezD4ED/.JBIDRh70tGevYzYzQgFId2u.'),
        ('Louisa Meyer', 'jacksonrose@hotmail.com', '$2a$10$FB/BOAVhpuLvpOREQVmvmezD4ED/.JBIDRh70tGevYzYzQgFId2u.'),
