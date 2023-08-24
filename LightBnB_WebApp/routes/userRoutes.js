@@ -32,7 +32,7 @@ router.post("/login", (req, res) => {
     }
 
     if (!bcrypt.compareSync(password, user.password)) {
-      return res.send({ error: "error" });
+      return res.send({ error: "incorrect password" });
     }
 
     req.session.userId = user.id;
