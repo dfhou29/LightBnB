@@ -3,6 +3,7 @@ const users = require("./json/users.json");
 
 // use pg to make database connection
 const {Pool} = require('pg');
+const querystring = require("querystring");
 const pool = new Pool({
   user: 'vagrant',
   password: '123',
@@ -169,7 +170,7 @@ const getAllProperties = function (options, limit = 10) {
 
   queryParams.push(limit);
   queryString += `ORDER BY cost_per_night LIMIT $${queryParams.length}`;
- 
+
   return pool.query(queryString, queryParams)
     .then((res) => {
       return res.rows;
@@ -186,10 +187,26 @@ const getAllProperties = function (options, limit = 10) {
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function (property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  console.log(property);
+  let queryParams = [];
+  const keys = Object.keys(property);
+  for (const key of keys) {
+    queryParams.push(property[key]);
+  }
+  const queryString = `
+    INSERT INTO properties (title, description, number_of_bedrooms, number_of_bathrooms, parking_spaces, cost_per_night, thumbnail_photo_url, cover_photo_url, street, country, city, province, post_code, owner_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    RETURNING *;
+  `;
+
+  return pool.query(queryString, queryParams)
+  .then(res => {
+    console.log(res.rows[0]);
+    return res.rows[0];
+  })
+  .catch(err => {
+    return console.error(err.stack);
+  });
 };
 
 module.exports = {
