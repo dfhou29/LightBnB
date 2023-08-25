@@ -1,106 +1,4 @@
-const properties = require("./json/properties.json");
-const users = require("./json/users.json");
-
-// use pg to make database connection
-const {Pool} = require('pg');
-const querystring = require("querystring");
-const pool = new Pool({
-  user: 'vagrant',
-  password: '123',
-  host: 'localhost',
-  database: 'lightbnb'
-});
-
-/// Users
-
-/**
- * Get a single user from the database given their email.
- * @param {String} email The email of the user.
- * @return {Promise<{}>} A promise to the user.
- */
-const getUserWithEmail = function (email) {
-  const queryString = `
-    SELECT * FROM users
-    WHERE email = $1
-  `;
-  return pool.query(queryString, [email])
-    .then(res => {
-      if (res.rows.length === 0) {
-        return null;
-      }
-      console.log('success', res.rows[0]);
-      return res.rows[0];
-    })
-    .catch(err => {
-      console.error('query error', err.stack);
-    });
-};
-
-/**
- * Get a single user from the database given their id.
- * @param {string} id The id of the user.
- * @return {Promise<{}>} A promise to the user.
- */
-const getUserWithId = function (id) {
-  const queryString = `
-    SELECT * FROM users
-    WHERE id = $1
-  `;
-  return pool.query(queryString, [id])
-  .then(res => {
-    if (res.rows.length === 0) {
-      return null;
-    }
-    return res.rows[0];
-  })
-  .catch(err => {
-    console.error('query error', err.stack);
-  });
-};
-
-/**
- * Add a new user to the database.
- * @param {{name: string, password: string, email: string}} user
- * @return {Promise<{}>} A promise to the user.
- */
-const addUser = function (user) {
-  const queryString = `
-    INSERT INTO users (email, name, password)
-    VALUES ($1, $2, $3)
-    RETURNING *;
-  `;
-  return pool.query(queryString, [user.email, user.name, user.password])
-  .then(res => {
-    return res.rows[0];
-  })
-  .catch(err => {
-    return console.error('query error', err.stack);
-  });
-
-};
-
-/// Reservations
-
-/**
- * Get all reservations for a single user.
- * @param {string} guest_id The id of the user.
- * @return {Promise<[{}]>} A promise to the reservations.
- */
-const getAllReservations = function (guest_id, limit = 10) {
-  const queryString = `
-    SELECT * FROM reservations
-    JOIN properties ON reservations.property_id = properties.id
-    WHERE guest_id = $1 LIMIT $2
-  `;
-
-  return pool.query(queryString, [guest_id, limit])
-  .then( res => {
-    return (res.rows);
-  })
-  .catch(err => {
-    return console.error(err.stack);
-  });
-};
+const pool = require('../index');
 
 /// Properties
 
@@ -113,7 +11,7 @@ const getAllReservations = function (guest_id, limit = 10) {
 const getAllProperties = function (options, limit = 10) {
 
   let queryString = `
-    SELECT properties.id, title, cost_per_night, thumbnail_photo_url, cover_photo_url, avg(rating) AS average_rating
+    SELECT properties.id, title, cost_per_night, thumbnail_photo_url, cover_photo_url, number_of_bedrooms, number_of_bathrooms, parking_spaces, avg(rating) AS average_rating
     FROM properties
            JOIN property_reviews ON properties.id = property_reviews.property_id
   `;
@@ -161,7 +59,7 @@ const getAllProperties = function (options, limit = 10) {
 
   }
 
-  queryString += `GROUP BY properties.id, title, cost_per_night `;
+  queryString += `GROUP BY properties.id, title, cost_per_night, thumbnail_photo_url, cover_photo_url `;
 
   if (options.minimum_rating) {
     queryParams.push(`${options.minimum_rating}`);
@@ -172,12 +70,12 @@ const getAllProperties = function (options, limit = 10) {
   queryString += `ORDER BY cost_per_night LIMIT $${queryParams.length}`;
 
   return pool.query(queryString, queryParams)
-    .then((res) => {
-      return res.rows;
-    })
-    .catch((err) => {
-      console.error('query error', err.stack);
-    });
+  .then((res) => {
+    return res.rows;
+  })
+  .catch((err) => {
+    console.error('query error', err.stack);
+  });
 };
 
 
@@ -190,6 +88,8 @@ const addProperty = function (property) {
   console.log(property);
   let queryParams = [];
   const keys = Object.keys(property);
+  property.cost_per_night += '00';
+
   for (const key of keys) {
     queryParams.push(property[key]);
   }
@@ -210,10 +110,6 @@ const addProperty = function (property) {
 };
 
 module.exports = {
-  getUserWithEmail,
-  getUserWithId,
-  addUser,
-  getAllReservations,
   getAllProperties,
-  addProperty,
+  addProperty
 };
