@@ -50,7 +50,6 @@ const getUserWithId = function (id) {
     if (res.rows.length === 0) {
       return null;
     }
-    console.log('success', res.rows[0]);
     return res.rows[0];
   })
   .catch(err => {
@@ -87,7 +86,19 @@ const addUser = function (user) {
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function (guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  const queryString = `
+    SELECT * FROM reservations
+    JOIN properties ON reservations.property_id = properties.id
+    WHERE guest_id = $1 LIMIT $2
+  `;
+
+  return pool.query(queryString, [guest_id, limit])
+  .then( res => {
+    return (res.rows);
+  })
+  .catch(err => {
+    return console.error(err.stack);
+  });
 };
 
 /// Properties
